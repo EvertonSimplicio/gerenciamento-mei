@@ -141,53 +141,65 @@ const App: React.FC = () => {
   };
 
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {
-    if (!user) return;
-    const id = Math.random().toString(36).substr(2, 9);
-    const tx = { ...newTx, id, userId: user.id } as Transaction;
-    
-    await firebaseService.saveTransaction(tx);
-    
-    // Update account balance
-    const acc = accounts.find(a => a.id === tx.accountId);
-    if (acc) {
-      const change = tx.type === TransactionType.INCOME ? tx.amount : -tx.amount;
-      await firebaseService.saveAccount({ ...acc, balance: acc.balance + change });
+    try {
+      if (!user) return;
+      const id = Math.random().toString(36).substr(2, 9);
+      const tx = { ...newTx, id, userId: user.id } as Transaction;
+      
+      await firebaseService.saveTransaction(tx);
+      
+      // Update account balance
+      const acc = accounts.find(a => a.id === tx.accountId);
+      if (acc) {
+        const change = tx.type === TransactionType.INCOME ? tx.amount : -tx.amount;
+        await firebaseService.saveAccount({ ...acc, balance: acc.balance + change });
+      }
+      
+      setIsAddModalOpen(false);
+    } catch (error: any) {
+      console.error("Erro ao adicionar lançamento:", error);
+      alert("Erro ao salvar o lançamento: " + error.message);
     }
-    
-    setIsAddModalOpen(false);
   };
 
   const updateTransaction = async (updatedTx: Transaction) => {
-    if (!user) return;
-    const oldTx = transactions.find(t => t.id === updatedTx.id);
-    if (!oldTx) return;
+    try {
+      if (!user) return;
+      const oldTx = transactions.find(t => t.id === updatedTx.id);
+      if (!oldTx) return;
 
-    await firebaseService.saveTransaction(updatedTx);
+      const finalTx = { ...oldTx, ...updatedTx } as Transaction;
 
-    // Handle balance changes if account or amount changed
-    if (oldTx.accountId === updatedTx.accountId) {
-      const acc = accounts.find(a => a.id === updatedTx.accountId);
-      if (acc) {
-        const oldChange = oldTx.type === TransactionType.INCOME ? oldTx.amount : -oldTx.amount;
-        const newChange = updatedTx.type === TransactionType.INCOME ? updatedTx.amount : -updatedTx.amount;
-        const netChange = newChange - oldChange;
-        await firebaseService.saveAccount({ ...acc, balance: acc.balance + netChange });
+      await firebaseService.saveTransaction(finalTx);
+
+      // Handle balance changes if account or amount changed
+      if (oldTx.accountId === finalTx.accountId) {
+        const acc = accounts.find(a => a.id === finalTx.accountId);
+        if (acc) {
+          const oldChange = oldTx.type === TransactionType.INCOME ? oldTx.amount : -oldTx.amount;
+          const newChange = finalTx.type === TransactionType.INCOME ? finalTx.amount : -finalTx.amount;
+          const netChange = newChange - oldChange;
+          await firebaseService.saveAccount({ ...acc, balance: acc.balance + netChange });
+        }
+      } else {
+        // Different accounts
+        const oldAcc = accounts.find(a => a.id === oldTx.accountId);
+        if (oldAcc) {
+          const revertChange = oldTx.type === TransactionType.INCOME ? -oldTx.amount : oldTx.amount;
+          await firebaseService.saveAccount({ ...oldAcc, balance: oldAcc.balance + revertChange });
+        }
+        const newAcc = accounts.find(a => a.id === finalTx.accountId);
+        if (newAcc) {
+          const applyChange = finalTx.type === TransactionType.INCOME ? finalTx.amount : -finalTx.amount;
+          await firebaseService.saveAccount({ ...newAcc, balance: newAcc.balance + applyChange });
+        }
       }
-    } else {
-      // Different accounts
-      const oldAcc = accounts.find(a => a.id === oldTx.accountId);
-      if (oldAcc) {
-        const revertChange = oldTx.type === TransactionType.INCOME ? -oldTx.amount : oldTx.amount;
-        await firebaseService.saveAccount({ ...oldAcc, balance: oldAcc.balance + revertChange });
-      }
-      const newAcc = accounts.find(a => a.id === updatedTx.accountId);
-      if (newAcc) {
-        const applyChange = updatedTx.type === TransactionType.INCOME ? updatedTx.amount : -updatedTx.amount;
-        await firebaseService.saveAccount({ ...newAcc, balance: newAcc.balance + applyChange });
-      }
+
+      setTransactionToEdit(null);
+    } catch (error: any) {
+      console.error("Erro ao atualizar lançamento:", error);
+      alert("Erro ao atualizar o lançamento: " + error.message);
     }
-
-    setTransactionToEdit(null);
   };
 
   const deleteTransaction = async (id: string) => {
