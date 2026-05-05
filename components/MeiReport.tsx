@@ -118,7 +118,7 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
               border: 2px solid #000000 !important;
               box-shadow: none !important;
               margin: 0 !important;
-              padding: 1.5cm !important;
+              padding: 1cm !important;
               width: 100% !important;
             }
             .no-print {
@@ -166,12 +166,12 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
 
       {/* Papel do Relatório */}
       <div className="overflow-x-auto pb-4 no-scrollbar">
-        <div className="print-area bg-white border-[2px] border-black p-6 md:p-12 shadow-sm text-black font-sans mx-auto min-w-[700px] md:min-w-0">
-          <div className="text-center mb-10 border-b-2 border-black pb-6">
+        <div className="print-area bg-white border-[2px] border-black p-6 md:p-8 shadow-sm text-black font-sans mx-auto min-w-[700px] md:min-w-0">
+          <div className="text-center mb-6 border-b-2 border-black pb-4">
             <h2 className="text-2xl font-black uppercase text-black leading-tight">Relatório Mensal das Receitas Brutas</h2>
           </div>
 
-        <div className="space-y-4 mb-10">
+        <div className="space-y-3 mb-6">
           <div className="flex gap-4 items-end">
             <span className="font-black text-sm uppercase whitespace-nowrap">CNPJ:</span>
             <div className="border-b border-black flex-1 font-bold text-sm h-6 px-2 italic">
@@ -192,7 +192,7 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
           </div>
         </div>
 
-        <table className="w-full border-collapse border-2 border-black mb-10">
+        <table className="w-full border-collapse border-2 border-black mb-6">
           <thead>
             <tr className="bg-slate-100">
               <th className="border border-black p-3 text-[11px] font-black uppercase text-left w-3/4">Receita Bruta Mensal - Discriminação</th>
@@ -258,7 +258,7 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
           </tbody>
         </table>
 
-        <div className="grid grid-cols-2 gap-12 mt-16 items-end">
+        <div className="grid grid-cols-2 gap-12 mt-8 items-end">
           <div className="space-y-1">
             <span className="text-[10px] font-black uppercase">Local e Data:</span>
             <div className="border-b border-black h-8 flex items-end text-xs font-bold px-2 italic">
@@ -272,7 +272,7 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
         </div>
 
         {/* Rodapé atualizado conforme a imagem do usuário */}
-        <div className="mt-16 p-6 border-2 border-black bg-slate-50 text-[11px] leading-relaxed text-left space-y-2">
+        <div className="mt-8 p-4 border-2 border-black bg-slate-50 text-[11px] leading-relaxed text-left space-y-2">
           <p className="font-black uppercase tracking-tight">ENCONTRAM-SE ANEXADOS A ESTE RELATÓRIO:</p>
           <div className="pl-2 space-y-1 font-medium">
             <p>- Os documentos fiscais comprobatórios das entradas de mercadorias e serviços tomados referentes ao período;</p>
