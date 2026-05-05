@@ -22,8 +22,9 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
 
   const reportData = useMemo(() => {
     const monthTransactions = transactions.filter(t => {
-      const d = new Date(t.date);
-      return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+      if (!t.date) return false;
+      const [y, m, d] = t.date.split('-');
+      return parseInt(m, 10) - 1 === selectedMonth && parseInt(y, 10) === selectedYear;
     });
 
     const incomeByType = (categoryNames: string[], invoice: boolean) => {
@@ -56,6 +57,12 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
     // Ensure default ones are included if not caught by keyword
     if (!goodsCategories.includes('Venda de Produtos')) goodsCategories.push('Venda de Produtos');
     if (!servicesCategories.includes('Prestação de Serviços')) servicesCategories.push('Prestação de Serviços');
+
+    // Fallback: any category not classified as goods goes to services, ensuring no income is lost
+    const unclassifiedCategories = categories.INCOME.filter(cat => 
+      !goodsCategories.includes(cat) && !servicesCategories.includes(cat)
+    );
+    servicesCategories.push(...unclassifiedCategories);
 
     const revendaMercadoriasNoNF = incomeByType(goodsCategories, false);
     const revendaMercadoriasNF = incomeByType(goodsCategories, true);
