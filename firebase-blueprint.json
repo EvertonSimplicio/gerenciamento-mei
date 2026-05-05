@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "password": { "type": "string" },
+        "meiName": { "type": "string" },
+        "cnpj": { "type": "string" },
+        "razaoSocial": { "type": "string" },
+        "categories": {
+          "type": "object",
+          "properties": {
+            "INCOME": { "type": "array", "items": { "type": "string" } },
+            "EXPENSE": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["id", "name", "email", "meiName"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Bank account or wallet",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["CHECKING", "SAVINGS", "CASH", "INVESTMENT"] },
+        "balance": { "type": "number" },
+        "color": { "type": "string" }
+      },
+      "required": ["id", "userId", "name", "type", "balance"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["INCOME", "EXPENSE"] },
+        "category": { "type": "string" },
+        "accountId": { "type": "string" },
+        "hasInvoice": { "type": "boolean" }
+      },
+      "required": ["id", "userId", "amount", "date", "description", "type", "category", "accountId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/accounts/{accountId}": {
+      "schema": "Account",
+      "description": "User accounts"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions"
+    }
+  }
+}

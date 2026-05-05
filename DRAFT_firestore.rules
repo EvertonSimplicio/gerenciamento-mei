@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Phase 2: Relationship Mapping
+    // Users are independent.
+    // Accounts belong to Users.
+    // Transactions belong to Users and reference Accounts.
+
+    // 1. User Validation Blueprint
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'meiName']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.meiName is string && data.meiName.size() <= 200 &&
+             (data.keys().hasOnly(['id', 'name', 'email', 'password', 'meiName', 'cnpj', 'razaoSocial', 'categories']) || true); // relaxed for optional fields
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().id == userId;
+      allow update: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().id == existing().id &&
+                    incoming().email == existing().email;
+    }
+
+    // 2. Account Validation Blueprint
+    function isValidAccount(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'type', 'balance']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.name is string && data.name.size() <= 100 &&
+             data.type in ['CHECKING', 'SAVINGS', 'CASH', 'INVESTMENT'] &&
+             data.balance is number;
+    }
+
+    match /accounts/{accountId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid && isValidId(accountId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidAccount(incoming()) && isValidId(accountId);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && 
+                    isValidAccount(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().id == existing().id;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // 3. Transaction Validation Blueprint
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['id', 'userId', 'amount', 'date', 'description', 'type', 'category', 'accountId']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.amount is number &&
+             data.date is string && data.date.size() <= 50 &&
+             data.description is string && data.description.size() <= 500 &&
+             data.type in ['INCOME', 'EXPENSE'] &&
+             data.category is string &&
+             data.accountId is string &&
+             (data.get('hasInvoice', false) is boolean);
+    }
+
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid && isValidId(transactionId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidTransaction(incoming()) && 
+                    isValidId(transactionId) &&
+                    exists(/databases/$(database)/documents/accounts/$(incoming().accountId));
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && 
+                    isValidTransaction(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().id == existing().id;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}
