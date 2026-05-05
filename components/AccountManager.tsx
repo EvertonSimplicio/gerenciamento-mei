@@ -5,17 +5,37 @@ import { Account } from '../types';
 interface AccountManagerProps {
   accounts: Account[];
   onUpdateAccount: (acc: Account) => void;
+  onAddAccount: (acc: Omit<Account, 'id' | 'userId'>) => void;
 }
 
-const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccount }) => {
-  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccount, onAddAccount }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<{name: string, balance: number, color: string}>({ name: '', balance: 0, color: 'bg-blue-600' });
+
+  const openAdd = () => {
+    setFormData({ name: '', balance: 0, color: 'bg-emerald-600' });
+    setEditId(null);
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (acc: Account) => {
+    setFormData({ name: acc.name, balance: acc.balance, color: acc.color });
+    setEditId(acc.id);
+    setIsModalOpen(true);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingAccount) {
-      onUpdateAccount(editingAccount);
-      setEditingAccount(null);
+    if (editId) {
+      const acc = accounts.find(a => a.id === editId);
+      if (acc) {
+        onUpdateAccount({ ...acc, ...formData });
+      }
+    } else {
+      onAddAccount(formData);
     }
+    setIsModalOpen(false);
   };
 
   return (
@@ -37,7 +57,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                   <i className={`fas fa-university text-xl text-black transition-colors`}></i>
                 </div>
                 <button 
-                  onClick={() => setEditingAccount(acc)}
+                  onClick={() => openEdit(acc)}
                   className="text-black hover:text-blue-600 transition-all p-2 hover:bg-slate-100 rounded-full"
                   title="Editar conta"
                 >
@@ -58,7 +78,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
           </div>
         ))}
 
-        <button className="border-4 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-black hover:border-blue-400 hover:text-blue-700 transition-all bg-slate-50">
+        <button onClick={openAdd} className="border-4 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-black hover:border-blue-400 hover:text-blue-700 transition-all bg-slate-50">
           <div className="w-12 h-12 bg-white rounded-full border-2 border-slate-300 flex items-center justify-center shadow-sm mb-4">
             <i className="fas fa-plus text-xl"></i>
           </div>
@@ -66,13 +86,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
         </button>
       </div>
 
-      {editingAccount && (
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingAccount(null)}></div>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden border-2 border-black animate-in zoom-in duration-200">
             <div className="p-6 border-b-2 border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-black text-black uppercase">Editar Conta</h2>
-              <button onClick={() => setEditingAccount(null)} className="text-black hover:text-rose-600">
+              <h2 className="text-xl font-black text-black uppercase">{editId ? 'Editar Conta' : 'Nova Conta'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-black hover:text-rose-600">
                 <i className="fas fa-times text-2xl"></i>
               </button>
             </div>
@@ -83,13 +103,13 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                   type="text" 
                   required
                   className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-black font-black"
-                  value={editingAccount.name}
-                  onChange={(e) => setEditingAccount({...editingAccount, name: e.target.value})}
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-black text-black uppercase ml-1">Saldo Atual (Ajuste)</label>
+                <label className="text-xs font-black text-black uppercase ml-1">{editId ? 'Saldo Atual (Ajuste)' : 'Saldo Inicial'}</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-black font-black">R$</span>
                   <input 
@@ -97,8 +117,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                     step="0.01"
                     required
                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-black font-black"
-                    value={editingAccount.balance}
-                    onChange={(e) => setEditingAccount({...editingAccount, balance: parseFloat(e.target.value)})}
+                    value={formData.balance}
+                    onChange={(e) => setFormData({...formData, balance: parseFloat(e.target.value)})}
                   />
                 </div>
               </div>
@@ -110,8 +130,8 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                     <button
                       key={color}
                       type="button"
-                      onClick={() => setEditingAccount({...editingAccount, color})}
-                      className={`w-10 h-10 rounded-full ${color} border-4 transition-all ${editingAccount.color === color ? 'border-black scale-110' : 'border-transparent'}`}
+                      onClick={() => setFormData({...formData, color})}
+                      className={`w-10 h-10 rounded-full ${color} border-4 transition-all ${formData.color === color ? 'border-black scale-110' : 'border-transparent'}`}
                     />
                   ))}
                 </div>
@@ -121,7 +141,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                 type="submit"
                 className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-slate-800 transition-all shadow-xl"
               >
-                Salvar Alterações
+                {editId ? 'Salvar Alterações' : 'Adicionar Conta'}
               </button>
             </form>
           </div>

@@ -217,7 +217,27 @@ const App: React.FC = () => {
   };
 
   const updateAccount = async (updatedAcc: Account) => {
-    await firebaseService.saveAccount(updatedAcc);
+    try {
+      await firebaseService.saveAccount(updatedAcc);
+    } catch (error: any) {
+      console.error("Erro ao atualizar conta:", error);
+      alert("Erro ao atualizar a conta: " + error.message);
+    }
+  };
+
+  const addAccount = async (newAcc: Omit<Account, 'id' | 'userId'>) => {
+    if (!user) return;
+    try {
+      const accToSave: Account = {
+        ...newAcc,
+        id: Date.now().toString(),
+        userId: user.uid
+      };
+      await firebaseService.saveAccount(accToSave);
+    } catch (error: any) {
+      console.error("Erro ao adicionar conta:", error);
+      alert("Erro ao adicionar a conta: " + error.message);
+    }
   };
 
   if (loading) {
@@ -275,7 +295,11 @@ const App: React.FC = () => {
           />
         )}
         {view === 'accounts' && (
-          <AccountManager accounts={accounts} onUpdateAccount={updateAccount} />
+          <AccountManager 
+            accounts={accounts} 
+            onUpdateAccount={updateAccount} 
+            onAddAccount={addAccount}
+          />
         )}
         {view === 'reports' && (
           <MeiReport transactions={transactions} categories={categories} />
