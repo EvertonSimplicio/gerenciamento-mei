@@ -11,6 +11,13 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(new Date().getFullYear());
+    transactions.forEach(t => years.add(new Date(t.date).getFullYear()));
+    return Array.from(years).sort((a, b) => a - b);
+  }, [transactions]);
+
   const monthsList = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   const reportData = useMemo(() => {
@@ -138,7 +145,7 @@ const MeiReport: React.FC<MeiReportProps> = ({ transactions, categories }) => {
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
             className="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-black text-black outline-none focus:border-blue-500"
           >
-            {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <button 
             onClick={handlePrint}

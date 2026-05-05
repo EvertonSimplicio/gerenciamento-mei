@@ -15,6 +15,13 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(new Date().getFullYear());
+    transactions.forEach(t => years.add(new Date(t.date).getFullYear()));
+    return Array.from(years).sort((a, b) => a - b);
+  }, [transactions]);
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       const d = new Date(t.date);
@@ -132,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts }) => {
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
             className="bg-white border-2 border-slate-300 rounded-xl px-4 py-2 text-sm font-black text-black shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {[2023, 2024, 2025].map(y => <option key={y} value={y}>{y}</option>)}
+            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
       )}
