@@ -148,16 +148,6 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
         </div>
       )}
 
-      <div className="bg-blue-600 rounded-3xl p-10 text-white relative overflow-hidden shadow-xl shadow-blue-500/20">
-        <div className="relative z-10">
-          <h2 className="text-3xl font-black mb-3">Precisa de crédito?</h2>
-          <p className="font-bold max-w-md mb-8 text-blue-50 text-lg leading-snug">Como MEI, você tem acesso a taxas exclusivas para expandir seu negócio. Confira as ofertas dos nossos parceiros.</p>
-          <button className="bg-white text-blue-700 px-8 py-4 rounded-2xl font-black hover:bg-slate-100 transition-all hover:scale-105 active:scale-95 shadow-lg uppercase tracking-widest text-sm">
-            Ver Ofertas Disponíveis
-          </button>
-        </div>
-        <i className="fas fa-rocket absolute -right-10 -bottom-10 text-[200px] opacity-10 rotate-12"></i>
-      </div>
     </div>
   );
 };
