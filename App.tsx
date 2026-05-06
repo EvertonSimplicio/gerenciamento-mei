@@ -231,7 +231,7 @@ const App: React.FC = () => {
       const accToSave: Account = {
         ...newAcc,
         id: Date.now().toString(),
-        userId: user.uid
+        userId: user.id
       };
       await firebaseService.saveAccount(accToSave);
     } catch (error: any) {
@@ -248,8 +248,8 @@ const App: React.FC = () => {
 
       for (const tx of newTxs) {
         const id = Date.now().toString() + Math.random().toString(36).substring(7);
-        const accToSave = { ...tx, id, userId: user.uid };
-        await firebaseService.saveTransaction(accToSave);
+        const txToSave = { ...tx, id, userId: user.id };
+        await firebaseService.saveTransaction(txToSave);
 
         const accIndex = currentAccounts.findIndex(a => a.id === tx.accountId);
         if (accIndex !== -1) {

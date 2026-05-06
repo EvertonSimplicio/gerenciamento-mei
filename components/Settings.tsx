@@ -99,18 +99,31 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
       }
 
       for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        // Melhorar o split do CSV para lidar com aspas, espaços e diferentes delimitadores (, ou ;)
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const delimiter = line.includes(';') ? ';' : ',';
+        
+        // Regex robusta para split de CSV respeitando aspas
+        const regex = new RegExp(`${delimiter}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
+        const cols = line.split(regex);
+        
         if (!cols || cols.length < 6) continue;
         
-        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"'));
+        const cleanCols = cols.map(c => c.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
         
         const date = cleanCols[0];
         const description = cleanCols[1];
-        const amount = parseFloat(cleanCols[2]);
-        const type = cleanCols[3] as TransactionType;
+        
+        // Tratar formato de número brasileiro (trocar vírgula por ponto se necessário)
+        let amountStr = cleanCols[2].replace(/[^\d.,-]/g, '').replace(',', '.');
+        const amount = parseFloat(amountStr);
+        
+        const typeRaw = cleanCols[3]?.toUpperCase();
         const category = cleanCols[4];
         const accountName = cleanCols[5];
-        const hasNfRaw = cleanCols[6];
+        const hasNfRaw = cleanCols[6]?.toLowerCase();
         
         if (isNaN(amount)) continue;
 
@@ -122,10 +135,10 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
           date,
           description,
           amount,
-          type: type === TransactionType.INCOME || type === 'INCOME' ? TransactionType.INCOME : TransactionType.EXPENSE,
-          category,
+          type: typeRaw === 'INCOME' || typeRaw === 'ENTRADA' ? TransactionType.INCOME : TransactionType.EXPENSE,
+          category: category || 'Outros',
           accountId: accId,
-          hasInvoice: hasNfRaw === 'Sim'
+          hasInvoice: hasNfRaw === 'sim' || hasNfRaw === 'true' || hasNfRaw === 's'
         });
       }
 
