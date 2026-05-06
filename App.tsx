@@ -240,6 +240,34 @@ const App: React.FC = () => {
     }
   };
 
+  const importTransactions = async (newTxs: Omit<Transaction, 'id' | 'userId'>[]) => {
+    if (!user) return;
+    
+    try {
+      let currentAccounts = [...accounts];
+
+      for (const tx of newTxs) {
+        const id = Date.now().toString() + Math.random().toString(36).substring(7);
+        const accToSave = { ...tx, id, userId: user.uid };
+        await firebaseService.saveTransaction(accToSave);
+
+        const accIndex = currentAccounts.findIndex(a => a.id === tx.accountId);
+        if (accIndex !== -1) {
+          const acc = currentAccounts[accIndex];
+          const adjust = tx.type === TransactionType.INCOME ? tx.amount : -tx.amount;
+          const updatedAcc = { ...acc, balance: acc.balance + adjust };
+          currentAccounts[accIndex] = updatedAcc;
+          await firebaseService.saveAccount(updatedAcc);
+        }
+      }
+      
+      alert(`Foram importados ${newTxs.length} lançamentos com sucesso e os saldos das contas foram ajustados!`);
+    } catch (error: any) {
+      console.error("Erro ao importar lançamentos:", error);
+      alert("Houve um erro ao salvar alguns lançamentos: " + error.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -310,6 +338,9 @@ const App: React.FC = () => {
             onUpdate={updateUserSettings} 
             categories={categories} 
             setCategories={handleSetCategories} 
+            transactions={transactions}
+            accounts={accounts}
+            onImportTransactions={importTransactions}
           />
         )}
       </main>

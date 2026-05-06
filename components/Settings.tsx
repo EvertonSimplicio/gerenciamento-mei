@@ -1,15 +1,18 @@
 
-import React, { useState } from 'react';
-import { User, TransactionType } from '../types';
+import React, { useState, useRef } from 'react';
+import { User, TransactionType, Transaction, Account } from '../types';
 
 interface SettingsProps {
   user: User;
   onUpdate: (user: User) => void;
   categories: { INCOME: string[], EXPENSE: string[] };
   setCategories: React.Dispatch<React.SetStateAction<{ INCOME: string[], EXPENSE: string[] }>>;
+  transactions: Transaction[];
+  accounts: Account[];
+  onImportTransactions: (txs: Omit<Transaction, 'id' | 'userId'>[]) => Promise<void>;
 }
 
-const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCategories }) => {
+const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCategories, transactions, accounts, onImportTransactions }) => {
   const [formData, setFormData] = useState<User>({ ...user });
   const [showToast, setShowToast] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -40,6 +43,103 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
       ...prev,
       [typeKey]: prev[typeKey].filter(c => c !== cat)
     }));
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = () => {
+    const headers = ['Data', 'Descrição', 'Valor', 'Tipo', 'Categoria', 'Conta', 'Nota Fiscal'];
+    
+    const rows = transactions.map(tx => {
+      const accName = accounts.find(a => a.id === tx.accountId)?.name || 'Desconhecida';
+      const hasNf = tx.hasInvoice ? 'Sim' : 'Não';
+      return [
+        tx.date,
+        `"${tx.description.replace(/"/g, '""')}"`,
+        tx.amount.toString(),
+        tx.type,
+        `"${tx.category}"`,
+        `"${accName}"`,
+        hasNf
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lancamentos_mei_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      if (lines.length <= 1) {
+        alert("O arquivo está vazio ou não possui lançamentos.");
+        return;
+      }
+
+      const parsedTxs: Omit<Transaction, 'id' | 'userId'>[] = [];
+      const defaultAccount = accounts[0];
+
+      if (!defaultAccount) {
+        alert("Você precisa ter pelo menos uma conta cadastrada para importar lançamentos.");
+        return;
+      }
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        if (!cols || cols.length < 6) continue;
+        
+        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"'));
+        
+        const date = cleanCols[0];
+        const description = cleanCols[1];
+        const amount = parseFloat(cleanCols[2]);
+        const type = cleanCols[3] as TransactionType;
+        const category = cleanCols[4];
+        const accountName = cleanCols[5];
+        const hasNfRaw = cleanCols[6];
+        
+        if (isNaN(amount)) continue;
+
+        let accId = defaultAccount.id;
+        const foundAcc = accounts.find(a => a.name.toLowerCase() === accountName.toLowerCase());
+        if (foundAcc) accId = foundAcc.id;
+
+        parsedTxs.push({
+          date,
+          description,
+          amount,
+          type: type === TransactionType.INCOME || type === 'INCOME' ? TransactionType.INCOME : TransactionType.EXPENSE,
+          category,
+          accountId: accId,
+          hasInvoice: hasNfRaw === 'Sim'
+        });
+      }
+
+      if (parsedTxs.length > 0) {
+        await onImportTransactions(parsedTxs);
+      } else {
+        alert("Nenhum lançamento válido encontrado para importar. Verifique o formato do CSV.");
+      }
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -187,6 +287,39 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Gerenciamento de Dados */}
+      <section className="bg-white rounded-3xl shadow-sm border-2 border-black overflow-hidden">
+        <div className="bg-slate-900 text-white px-8 py-4 flex items-center gap-3">
+          <i className="fas fa-database"></i>
+          <h2 className="font-black uppercase text-sm tracking-widest">Gerenciamento de Dados</h2>
+        </div>
+        <div className="p-8 space-y-6">
+          <p className="text-black font-bold">Faça backup dos seus lançamentos ou importe um histórico antigo. (Use o mesmo formato gerado pelo exportar para fazer a importação).</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button 
+              onClick={handleExport}
+              className="py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-xl flex items-center justify-center gap-2"
+            >
+              <i className="fas fa-file-export"></i> Exportar CSV
+            </button>
+            
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-emerald-700 transition-all shadow-xl flex items-center justify-center gap-2"
+            >
+              <i className="fas fa-file-import"></i> Importar CSV
+            </button>
+            <input 
+              type="file" 
+              accept=".csv" 
+              ref={fileInputRef} 
+              onChange={handleImport} 
+              className="hidden" 
+            />
           </div>
         </div>
       </section>
