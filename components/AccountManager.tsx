@@ -11,16 +11,21 @@ interface AccountManagerProps {
 const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccount, onAddAccount }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<{name: string, balance: number, color: string}>({ name: '', balance: 0, color: 'bg-blue-600' });
+  const [formData, setFormData] = useState<{name: string, balance: number, color: string, type: 'CHECKING' | 'SAVINGS' | 'CASH' | 'INVESTMENT'}>({ 
+    name: '', 
+    balance: 0, 
+    color: 'bg-blue-600',
+    type: 'CHECKING'
+  });
 
   const openAdd = () => {
-    setFormData({ name: '', balance: 0, color: 'bg-emerald-600' });
+    setFormData({ name: '', balance: 0, color: 'bg-emerald-600', type: 'CHECKING' });
     setEditId(null);
     setIsModalOpen(true);
   };
 
   const openEdit = (acc: Account) => {
-    setFormData({ name: acc.name, balance: acc.balance, color: acc.color });
+    setFormData({ name: acc.name, balance: acc.balance, color: acc.color, type: acc.type || 'CHECKING' });
     setEditId(acc.id);
     setIsModalOpen(true);
   };
@@ -65,7 +70,11 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                 </button>
               </div>
               <h3 className="text-lg font-black text-black mb-1">{acc.name}</h3>
-              <p className="text-black font-bold text-xs mb-4 uppercase tracking-tighter opacity-80">Conta Corrente PJ</p>
+              <p className="text-black font-bold text-xs mb-4 uppercase tracking-tighter opacity-80">
+                {acc.type === 'CHECKING' ? 'Conta Corrente' : 
+                 acc.type === 'SAVINGS' ? 'Poupança' : 
+                 acc.type === 'CASH' ? 'Dinheiro em Espécie' : 'Investimento'}
+              </p>
               <p className="text-2xl font-black text-black">
                 {acc.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
@@ -121,6 +130,20 @@ const AccountManager: React.FC<AccountManagerProps> = ({ accounts, onUpdateAccou
                     onChange={(e) => setFormData({...formData, balance: parseFloat(e.target.value)})}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-black text-black uppercase ml-1">Tipo de Conta</label>
+                <select 
+                  className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-black font-black"
+                  value={formData.type}
+                  onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                >
+                  <option value="CHECKING">Conta Corrente</option>
+                  <option value="SAVINGS">Poupança</option>
+                  <option value="CASH">Dinheiro em Espécie</option>
+                  <option value="INVESTMENT">Investimento</option>
+                </select>
               </div>
 
               <div className="space-y-1">
