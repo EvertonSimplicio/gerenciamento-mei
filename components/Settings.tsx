@@ -228,7 +228,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
             type="submit"
             className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-xl"
           >
-            ATUALIZAR DADOS DA EMPRESA
+            SALVAR TODAS AS ALTERAÇÕES
           </button>
         </form>
       </section>
@@ -348,8 +348,17 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
         </div>
       </section>
 
+      {/* Botão de Salvar Flutuante para Settings */}
+      <button 
+        onClick={handleSubmit}
+        className="fixed bottom-24 right-6 md:bottom-8 md:right-8 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-2xl z-50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4"
+      >
+        <i className="fas fa-save"></i>
+        SALVAR ALTERAÇÕES
+      </button>
+
       {showToast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl animate-in fade-in slide-in-from-bottom-4 z-50">
+        <div className="fixed bottom-32 md:bottom-24 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl animate-in fade-in slide-in-from-bottom-4 z-50">
           <i className="fas fa-check-circle mr-2"></i> DADOS SALVOS COM SUCESSO!
         </div>
       )}
