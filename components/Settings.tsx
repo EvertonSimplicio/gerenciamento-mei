@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { User, TransactionType, Transaction, Account } from '../types';
 
 interface SettingsProps {
@@ -368,18 +369,21 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
         </div>
       </section>
 
-      {/* Botão de Salvar Flutuante para Settings */}
-      <button 
-        onClick={handleSubmit}
-        disabled={loading}
-        className="fixed bottom-24 right-6 md:bottom-8 md:right-8 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-2xl z-50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
-        {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
-      </button>
+      {/* Portal para o Botão de Salvar no Topo */}
+      {document.getElementById('navbar-extra-action') && createPortal(
+        <button 
+          onClick={handleSubmit}
+          disabled={loading}
+          className="ml-4 bg-blue-600 text-white p-2.5 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+        >
+          <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
+          <span className="hidden xs:inline">{loading ? '...' : 'SALVAR'}</span>
+        </button>,
+        document.getElementById('navbar-extra-action')!
+      )}
 
       {showToast && (
-        <div className="fixed bottom-32 md:bottom-24 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl animate-in fade-in slide-in-from-bottom-4 z-50">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl animate-in fade-in slide-in-from-bottom-4 z-50">
           <i className="fas fa-check-circle mr-2"></i> DADOS SALVOS COM SUCESSO!
         </div>
       )}

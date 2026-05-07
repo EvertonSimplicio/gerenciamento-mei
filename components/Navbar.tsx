@@ -18,6 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, setView, onLogout, userName
               <i className="fas fa-briefcase text-2xl"></i>
             </div>
             <span className="text-2xl font-black text-black tracking-tighter">Gerenciamento <span className="text-blue-600">Mei</span></span>
+            <div id="navbar-extra-action" className="flex items-center"></div>
           </div>
 
           <div className="hidden md:flex space-x-8">
