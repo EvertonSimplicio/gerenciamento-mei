@@ -312,7 +312,7 @@ const App: React.FC = () => {
 
       <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
         {view === 'dashboard' && (
-          <Dashboard transactions={transactions} accounts={accounts} />
+          <Dashboard transactions={transactions} accounts={accounts} user={user} />
         )}
         {view === 'transactions' && (
           <TransactionList 

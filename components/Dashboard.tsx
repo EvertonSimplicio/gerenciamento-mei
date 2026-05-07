@@ -6,11 +6,12 @@ import { Transaction, Account, TransactionType } from '../types';
 interface DashboardProps {
   transactions: Transaction[];
   accounts: Account[];
+  user: User | null;
 }
 
 type PeriodFilter = 'month' | 'year' | 'all';
 
-const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts }) => {
+const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts, user }) => {
   const [filterType, setFilterType] = useState<PeriodFilter>('month');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -85,7 +86,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts }) => {
     }
   }, [transactions, filterType, selectedMonth, selectedYear]);
 
-  const meiLimit = 81000;
+  const meiLimit = user?.meiLimit || 81000;
   const currentYearFaturamento = transactions
     .filter(t => t.type === TransactionType.INCOME && new Date(t.date).getFullYear() === selectedYear)
     .reduce((sum, t) => sum + t.amount, 0);
@@ -214,7 +215,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, accounts }) => {
               <span className="text-sm font-black text-blue-700">
                 {currentYearFaturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </span>
-              <span className="text-sm font-black text-black">Teto: R$ 81.000</span>
+              <span className="text-sm font-black text-black">Teto: {meiLimit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
             </div>
             
             <div className="w-full bg-slate-200 rounded-full h-6 overflow-hidden border-2 border-slate-300">

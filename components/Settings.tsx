@@ -213,6 +213,17 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
             />
           </div>
 
+          <div className="space-y-1">
+            <label className="text-xs font-black text-black uppercase ml-1">Limite MEI Anual (R$)</label>
+            <input 
+              type="number" 
+              placeholder="81000"
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-black font-black"
+              value={formData.meiLimit || ''}
+              onChange={(e) => setFormData({...formData, meiLimit: parseFloat(e.target.value) || 0})}
+            />
+          </div>
+
           <button 
             type="submit"
             className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-xl"

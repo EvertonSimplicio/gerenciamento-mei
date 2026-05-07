@@ -34,10 +34,13 @@ export interface User {
   cnpj?: string;
   razaoSocial?: string;
   endereco?: string;
+  meiLimit?: number;
 }
 
 export interface AppState {
   transactions: Transaction[];
   accounts: Account[];
   user: User | null;
+}
+
 }
