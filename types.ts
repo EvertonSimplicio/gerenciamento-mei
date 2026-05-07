@@ -35,6 +35,7 @@ export interface User {
   razaoSocial?: string;
   endereco?: string;
   meiLimit?: number;
+  categories?: { INCOME: string[], EXPENSE: string[] };
 }
 
 export interface AppState {

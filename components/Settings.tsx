@@ -15,14 +15,33 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCategories, transactions, accounts, onImportTransactions }) => {
   const [formData, setFormData] = useState<User>({ ...user });
   const [showToast, setShowToast] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryType, setCategoryType] = useState<TransactionType>(TransactionType.INCOME);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Sincronizar formData se o user mudar externamente
+  React.useEffect(() => {
+    setFormData({ ...user });
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate(formData);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    setLoading(true);
+    try {
+      // Garantir que as categorias atuais sejam incluídas no save
+      const dataToSave = { 
+        ...formData, 
+        categories: categories 
+      };
+      await onUpdate(dataToSave);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao salvar as configurações. Verifique sua conexão.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addCategory = () => {
@@ -226,9 +245,10 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
 
           <button 
             type="submit"
-            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-xl"
+            disabled={loading}
+            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            SALVAR TODAS AS ALTERAÇÕES
+            {loading ? 'SALVANDO...' : 'SALVAR TODAS AS ALTERAÇÕES'}
           </button>
         </form>
       </section>
@@ -351,10 +371,11 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdate, categories, setCate
       {/* Botão de Salvar Flutuante para Settings */}
       <button 
         onClick={handleSubmit}
-        className="fixed bottom-24 right-6 md:bottom-8 md:right-8 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-2xl z-50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4"
+        disabled={loading}
+        className="fixed bottom-24 right-6 md:bottom-8 md:right-8 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 transition-all shadow-2xl z-50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <i className="fas fa-save"></i>
-        SALVAR ALTERAÇÕES
+        <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
+        {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
       </button>
 
       {showToast && (

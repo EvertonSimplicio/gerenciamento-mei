@@ -127,20 +127,31 @@ const App: React.FC = () => {
   };
 
   const updateUserSettings = async (updatedUser: User) => {
-    setUser(updatedUser);
-    await firebaseService.saveUser(updatedUser);
+    // Garantir que as categorias atuais estejam no objeto se não estiverem presentes
+    const finalUser = {
+      ...updatedUser,
+      categories: updatedUser.categories || categories
+    };
+    
+    setUser(finalUser);
+    await firebaseService.saveUser(finalUser);
   };
 
   const handleSetCategories = async (newCategories: any) => {
     setCategories(prev => {
       const resolved = typeof newCategories === 'function' ? newCategories(prev) : newCategories;
       
-      // Persist to Firestore after resolving
+      // Persistir no Firestore após resolver as categorias
       if (user) {
-        const updatedUser = { ...user, categories: resolved };
-        // We don't await here to keep UI snappy, but it will save
+        const updatedUser = { 
+          ...user, 
+          categories: resolved 
+        };
+        
         firebaseService.saveUser(updatedUser).then(() => {
           setUser(updatedUser);
+        }).catch(err => {
+          console.error("Erro ao salvar categorias:", err);
         });
       }
       
