@@ -43,4 +43,3 @@ export interface AppState {
   user: User | null;
 }
 
-}
