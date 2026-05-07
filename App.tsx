@@ -131,13 +131,21 @@ const App: React.FC = () => {
     await firebaseService.saveUser(updatedUser);
   };
 
-  const handleSetCategories = async (newCategories: { INCOME: string[], EXPENSE: string[] }) => {
-    setCategories(newCategories);
-    if (user) {
-      const updatedUser = { ...user, categories: newCategories };
-      setUser(updatedUser);
-      await firebaseService.saveUser(updatedUser);
-    }
+  const handleSetCategories = async (newCategories: any) => {
+    setCategories(prev => {
+      const resolved = typeof newCategories === 'function' ? newCategories(prev) : newCategories;
+      
+      // Persist to Firestore after resolving
+      if (user) {
+        const updatedUser = { ...user, categories: resolved };
+        // We don't await here to keep UI snappy, but it will save
+        firebaseService.saveUser(updatedUser).then(() => {
+          setUser(updatedUser);
+        });
+      }
+      
+      return resolved;
+    });
   };
 
   const addTransaction = async (newTx: Omit<Transaction, 'id'>) => {
